@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'jacoco'
 }
 
 android {
@@ -30,6 +31,13 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+        unitTests.includeAndroidResources = true
+    }
+
+    testCoverage.jacocoVersion = "0.8.9"
 }
 
 dependencies {
@@ -43,4 +51,53 @@ dependencies {
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+
+//tasks.withType(Test) {
+//    test {
+//        finalizedBy jacocoTestReport // report is always generated after tests run
+//    }
+//}
+
+task jacocoTestReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports after running tests."
+
+    def androidExclusion = [
+            '**/BR.*',
+            '**/R.*',
+            '**/R$*.*',
+            '**/BuildConfig.*',
+            '**/Manifest*.*',
+            '**/*Fragment*.*',
+            '**/*Adapter*.*',
+            '**/*Decoration*.*',
+            '**/*View*.*',
+            '**/WheelPicker.*'
+    ]
+
+    reports {
+        xml.getRequired().set(true)
+        html.getRequired().set(true)
+    }
+    //Gradle 5.1.1 changed class path
+    classDirectories.from = files([
+            fileTree(
+                    // Java generated classes (debug build)
+                    dir: 'build/intermediates/javac/debug/classes',
+                    excludes: androidExclusion
+            ),
+            fileTree(
+                    // Kotlin generated classes (debug build)
+                    dir: 'build/tmp/kotlin-classes/debug',
+                    excludes: androidExclusion
+            )
+    ])
+    sourceDirectories.from = files('src/main/java/')
+    executionData.from = files('build/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec')
+}
+
+tasks.withType(Test) {
+    jacoco.includeNoLocationClasses true
+    jacoco.excludes = ['jdk.internal.*']
 }
