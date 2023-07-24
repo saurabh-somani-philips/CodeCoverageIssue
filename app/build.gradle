@@ -37,7 +37,7 @@ android {
         unitTests.includeAndroidResources = true
     }
 
-    testCoverage.jacocoVersion = "0.8.9"
+    testCoverage.jacocoVersion = "$jacocoVer"
 }
 
 dependencies {
